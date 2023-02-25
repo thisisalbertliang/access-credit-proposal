@@ -1,4 +1,4 @@
-\documentclass[11pt]{article}
+\documentclass[10pt]{article}
 
 \usepackage[top=0.5in, bottom=0.5in, left=0.5in, right=0.5in]{geometry}
 \usepackage{authblk}
@@ -46,7 +46,7 @@ We call this model the \textit{Inverse Modeling} network, or simply the backward
 Since the mapping between the non-linear displacements to the linear displacements is one-to-many, training a neural network for such predictions is essentially ill-defined because of the one-to-one nature of neural network mappings.
 However, in this work, we demonstrate that neural networks can accurately recover the initial displacement field on large scales despite the ill-defined nature of the problem.
 This is the first work that tries to use a neural network to predict the initial conditions of the universe given the current time conditions.
-Due to limited computational resources, at the moment, we have only tested our method on a small set of synthetic N-body simulations. However, these preliminary results have already shown great promises and we are looking to utilize more powerful GPUs to further train and evaluate our backward model on larger, more realistic simulations such as the Quijote simulation suite \cite{quijote}.
+Due to limited computational resources, at the moment, we have only tested our method on a small set of synthetic N-body simulations. However, these preliminary results have already shown great promises and we are looking to utilize more powerful GPUs to further train and evaluate our backward model on larger, more realistic simulations such as the Quijote simulation suite \cite{quijote}. Specifically, we hope to be approved for Accelerate ACCESS credits so that we can access $\geq 4$ GPUs with $\geq 32$ GB of memory on a cluster with $7$TB of disk space. We plan to use our credits at PSC (Pittsburgh Supercomputing Center).
 
 \section{Introduction}
 
@@ -117,18 +117,18 @@ Figure \ref{slices} shows the x, y, and z direction displacements for a $128\tim
 \begin{figure*}[t!]
   \begin{center}
   \centerline{\includegraphics[width=\textwidth]{images/lin.png}}
-  \caption{Two-point correlation comparison between the original linear field (target) and the linear field predicted by our model (prediction). For an exact prediction, the variation of power with wavenumber should be exactly similar for both the fields, and the values of transfer function fractional error and stochasticity should be exactly zero. }
+  \caption{Two-point correlation comparison between the original linear displacement field (target) and the linear displacement field predicted by our model (prediction). For an exact prediction, the variation of power with wave number should be exactly the same for both the fields, and the values of transfer function fractional error and stochasticity should be exactly zero. }
   \label{lin}
   \end{center}
 \end{figure*}
 
-\begin{figure*}[t!]
-  \begin{center}
-  \centerline{\includegraphics[width=\textwidth]{images/dis.png}}
-  \caption{Two-point correlation comparison between the original non-linear field (target) and the non-linear field generated from the predicted linear field given by the inverse model. For an exact prediction, the variation of power with wavenumber should be exactly similar for both the fields, and the values of transfer function fractional error and stochasticity should be exactly zero.}
-  \label{dis}
-  \end{center}
-\end{figure*}
+% \begin{figure*}[t!]
+%   \begin{center}
+%   \centerline{\includegraphics[width=\textwidth]{images/dis.png}}
+%   \caption{Two-point correlation comparison between the original non-linear field (target) and the non-linear field generated from the predicted linear field given by the inverse model. For an exact prediction, the variation of power with wavenumber should be exactly similar for both the fields, and the values of transfer function fractional error and stochasticity should be exactly zero.}
+%   \label{dis}
+%   \end{center}
+% \end{figure*}
 
 The displacement power spectrum for a displacement field $\mathbf{\Psi}$ for wavenumber $k$ is defined as
 $$
@@ -156,7 +156,20 @@ to capture the excess fraction of correlation in prediction of our model that ca
 
 Given the promising results on the synthetic data, we are now ready to train and evaluate our model on larger, more realistic cosmological simulations. In particular, we plan to train our model on 2000 pairs of linear and nonlinear displacement fields from the Quijote latin hypercube N-body suite \cite{quijote}. Each of these simulations contain $512^3$ particles in a $1 \text{ Gpc } h^{-1}$ box and were run with the Gadget-3 simulation code \cite{gadget-3}. \textbf{In total, we expect these 2000 simulations to take up 7TB of disk space.}
 
-In our model implementation, we represent the displacement fields as $3 \times 512 \times 512 \times 512$ tensors. This poses an engineering challenge as we cannot even load a single full displacement field into the GPU memory. Our current model training code addresses this problem by splitting the displacement fields into many smaller patches and then training the model on these patches. The size of these patches depends on the maximum memory available on the GPU, which is the main bottleneck of our training throughput. For getting the preliminary results on the synthetic data, we used a single NVIDIA TITAN X (Pascal) GPU with 12GB of memory, which can only hold a patch of size at most $3 \times 32 \times 32 \times 32$ (not including the $48$ padding on both side for each dimension). As a result, even though our synthetic displacement fields only have size $3 \times 128 \times 128 \times 128$, it still took us 15 days to train our model on just 30 input-output pairs. To ensure that we can efficiently train our model on the Quijote simulations, \textbf{we request GPUs with memory size of at least 32 GB.}. Having more GPU memory allows us to train our model on larger patches, which will significantly speed up our model training by reducing the number of patches needed to iterate over the full displacement field.
+In our model implementation, we represent the displacement fields as $3 \times 512 \times 512 \times 512$ tensors, which consumes significant memory. This poses an engineering challenge as we cannot even load a single full displacement field into the GPU. Our current model training code addresses this problem by splitting the displacement fields into many smaller patches and then training the model on these patches. The size of these patches depends on the maximum memory available on the GPU, which is the main bottleneck of our training throughput. For getting the preliminary results on the synthetic data, we used a NVIDIA TITAN X (Pascal) GPU with 12GB of memory, which can only hold a patch of size at most $3 \times 32 \times 32 \times 32$ (not including the $48$ padding size that is needed on both side for every dimension). As a result, even though our synthetic displacement fields only have size $3 \times 128 \times 128 \times 128$, it still took us 15 days to train our model on just tens of input-output pairs. To ensure that we can efficiently train our model on the Quijote simulations, \textbf{we request GPUs with memory size of at least 32 GB.} Having more GPU memory allows us to train our model on larger patches, which will significantly speed up our model training by reducing the number of patches needed to iterate over the full displacement field.
+
+To further speed up our training, we plan to also extend our current model training code to support data parallelism so that we can scale our batch size linearly with the number of GPUs available, translating into a linear speedup in our training throughput. Therefore, \textbf{we also request access to a GPU cluster with at least 4 GPUs.}
+
+In summary, we request the following resources:
+$$
+\begin{cases}
+  \text{GPU Memory:} & \geq 32 \text{ GB} \\
+  \text{Number of GPUs:} & \geq 4 \\
+  \text{Disk Space:} & 7 \text{ TB} \\
+\end{cases}
+$$
+
+Given these requirements, we hope to be approved for Accelerate ACCESS credits. Our current plan is to apply these credits to PSC (Pittsburgh Supercomputing Center), where the GPU and CPU resource capacity is expected to meet our needs.
 
 \pagebreak
 
